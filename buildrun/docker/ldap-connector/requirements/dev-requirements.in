@@ -1,0 +1,10 @@
+-r base-requirements.txt
+-r test-requirements.txt
+django-debug-toolbar
+django-extensions
+ipython
+watchdog[watchmedo]
+watchfiles
+rich
+django_browser_reload
+django-linear-migrations

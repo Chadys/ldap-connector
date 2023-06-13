@@ -1,0 +1,6 @@
+django[argon2]
+python-ldap
+environs[django]
+sentry-sdk[django]
+django-cors-headers
+django-csp

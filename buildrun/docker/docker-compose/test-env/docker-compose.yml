@@ -1,0 +1,27 @@
+services:
+  test:
+    build:
+      context: ../../../..
+      dockerfile: buildrun/docker/ldap-connector/Dockerfile
+      target: test-image
+    image: ldap-connector:local-test
+    volumes:
+      - ../../../../src:/code
+      - ../../ldap-connector/ssh_keys:/.ssh
+    env_file:
+      - ../../ldap-connector/secrets.env
+    depends_on:
+      - ldap
+#    command: pytest -m "not ldap"
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    environment:
+      LDAP_ORGANISATION: domain.com
+      LDAP_DOMAIN: domain.com
+      LDAP_ADMIN_PASSWORD: ldap_admin_pwd
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_PASSWORD: ldap_pwd
+    command: --copy-service
+    volumes:
+      - ../../ldap/custom:/container/service/slapd/assets/config/bootstrap/ldif/custom

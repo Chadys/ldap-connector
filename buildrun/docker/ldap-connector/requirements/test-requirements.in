@@ -1,0 +1,5 @@
+-r base-requirements.txt
+pytest-django
+pytest-mock
+pytest-cov
+pytest-xdist[psutil]

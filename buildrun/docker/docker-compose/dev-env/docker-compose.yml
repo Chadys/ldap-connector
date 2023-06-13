@@ -1,0 +1,72 @@
+services:
+  main:
+    build:
+      context: ../../../..
+      dockerfile: buildrun/docker/ldap-connector/Dockerfile
+      target: dev-image
+    image: ldap-connector:develop
+    command: python manage.py runserver 0.0.0.0:8000 --settings=configurations.dev-settings
+    volumes:
+      - ../../../../src:/code
+      - ../../ldap-connector/ssh_keys:/.ssh
+      - /code/public/cache/
+      - /opt/project/src/public/cache/
+    env_file:
+      - ../../ldap-connector/dev.env
+      - ../../ldap-connector/secrets.env
+    tty: true
+    depends_on:
+      - ldap
+    #    ports:
+    #      - "8000:8000"
+
+  compile-dep:
+    build:
+      context: ../../../..
+      dockerfile: buildrun/docker/ldap-connector/Dockerfile
+      target: dev-image
+    image: ldap-connector:develop
+    restart: on-failure
+    profiles:
+      - compile
+    command: >
+      sh -c
+      "pip-compile --upgrade --output-file requirements/base-requirements.txt requirements/base-requirements.in &&
+      pip-compile --upgrade --output-file requirements/test-requirements.txt requirements/test-requirements.in &&
+      pip-compile --upgrade --output-file requirements/dev-requirements.txt requirements/dev-requirements.in &&
+      pip-compile --upgrade --output-file requirements/prod-requirements.txt requirements/prod-requirements.in"
+    volumes:
+      - ../../ldap-connector/requirements/:/code/requirements/
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    environment:
+      LDAP_ORGANISATION: domain.com
+      LDAP_DOMAIN: domain.com
+      LDAP_ADMIN_PASSWORD: ldap_admin_pwd
+      LDAP_READONLY_USER: "true"
+      LDAP_READONLY_USER_PASSWORD: ldap_pwd
+    command: --loglevel debug --copy-service
+    volumes:
+      - ../../ldap/custom:/container/service/slapd/assets/config/bootstrap/ldif/custom
+      - ldap-db-ldap-connector:/var/lib/ldap
+      - ldap-config-ldap-connector:/etc/ldap/slapd.d
+#    ports:
+#      - 389:389
+#      - 636:636
+
+  ldap-admin:
+    image: osixia/phpldapadmin:0.9.0
+    command: --loglevel debug
+    environment:
+      PHPLDAPADMIN_HTTPS: "false"
+      PHPLDAPADMIN_LDAP_HOSTS: ldap
+    ports:
+      - 9090:80
+    depends_on:
+      - ldap
+
+
+volumes:
+    ldap-db-ldap-connector:
+    ldap-config-ldap-connector:
